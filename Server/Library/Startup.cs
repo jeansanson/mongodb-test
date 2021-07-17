@@ -1,6 +1,7 @@
 using Library.Models;
 using Library.Services;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -40,6 +41,7 @@ namespace Library
         {
             if (env.IsDevelopment())
             {
+                app.UseCors(action => action.AllowAnyMethod().AllowAnyOrigin().AllowAnyHeader());
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Library v1"));

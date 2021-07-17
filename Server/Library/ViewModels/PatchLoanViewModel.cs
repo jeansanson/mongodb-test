@@ -1,18 +1,18 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace Library.ViewModels
 {
-    public class BookLoanViewModel
+    public class PatchLoanViewModel
     {
+        [Required]
         public string BookId { get; set; }
 
-        public string BookTitle { get; set; }
+        [Required]
+        public string Id { get; set; }
 
-        public string BookAuthor { get; set; }
-
+        [Required]
         public string User { get; set; }
-
-        public DateTime Borrowed { get; set; }
 
         public DateTime Returned { get; set; }
     }

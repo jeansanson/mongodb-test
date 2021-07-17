@@ -36,7 +36,7 @@ namespace Library.Controllers
         [HttpGet("{id:length(24)}", Name = "GetBook")]
         public ActionResult<BookViewModel> Get(string id)
         {
-            BookLoan bookLoan = _bookService.Get(id);
+            Book bookLoan = _bookService.Get(id);
             return bookLoan == null ? NotFound() : ToViewModel(bookLoan);
         }
 
@@ -46,7 +46,7 @@ namespace Library.Controllers
         [HttpPost]
         public ActionResult<BookViewModel> Create(CreateBookViewModel createBookViewModel)
         {
-            BookLoan bookLoan = createBookViewModel.ToModel();
+            Book bookLoan = createBookViewModel.ToModel();
             _bookService.Create(bookLoan);
             return CreatedAtRoute("GetBook", new { id = bookLoan.Id.ToString() }, bookLoan);
         }
@@ -62,7 +62,7 @@ namespace Library.Controllers
                 return BadRequest("Body and url parameters must match.");
             }
 
-            BookLoan bookLoan = _bookService.Get(id);
+            Book bookLoan = _bookService.Get(id);
             if (bookLoan == null)
             {
                 return NotFound();
@@ -79,7 +79,7 @@ namespace Library.Controllers
         [HttpDelete("{id:length(24)}")]
         public IActionResult Delete(string id)
         {
-            BookLoan book = _bookService.Get(id);
+            Book book = _bookService.Get(id);
 
             if (book == null)
             {
@@ -90,7 +90,7 @@ namespace Library.Controllers
             return NoContent();
         }
 
-        private static BookViewModel ToViewModel(BookLoan bookLoan)
+        private static BookViewModel ToViewModel(Book bookLoan)
         {
             return new BookViewModel
             {
@@ -100,7 +100,7 @@ namespace Library.Controllers
             };
         }
 
-        private static List<BookViewModel> ToViewModel(List<BookLoan> bookLoan)
+        private static List<BookViewModel> ToViewModel(List<Book> bookLoan)
         {
             var result = new List<BookViewModel>();
             bookLoan.ForEach(model => { result.Add(ToViewModel(model)); });

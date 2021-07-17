@@ -2,6 +2,7 @@
 using Library.Services;
 using Library.ViewModels;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Collections.Generic;
 
 namespace Library.Controllers
@@ -18,86 +19,70 @@ namespace Library.Controllers
         }
 
         /// <summary>
-        /// Obter todos os empréstimos.
+        /// Obter empréstimos de um livro.
         /// </summary>
+        [Route("{bookId:length(24)}")]
         [HttpGet]
-        public ActionResult<List<BookLoanViewModel>> Get() =>
-            ToViewModel(_bookService.Get(LoanedOnly()));
-
-        /// <summary>
-        /// Obter um empréstimo para um livro.
-        /// </summary>
-        [Route("{id:length(24)}")]
-        [HttpGet]
-        public ActionResult<BookLoanViewModel> Get([FromRoute] string id)
+        public ActionResult<LoanViewModel> Get([FromRoute] string bookId)
         {
-            BookLoan bookLoan = _bookService.Get(id);
-            if (bookLoan == null)
-            {
-                return NotFound();
-            }
-            if (!bookLoan.Loaned)
-            {
-                return BadRequest("Book isn't loaned.");
-            }
-            return ToViewModel(bookLoan);
+            Book book = _bookService.Get(bookId);
+            if (book == null) return NotFound("Book not found");
+            return Ok(book.Loans);
         }
 
         /// <summary>
-        /// Atualiza um empréstimo.
+        /// Atualizar um empréstimo.
         /// </summary>
-        [Route("{id:length(24)}")]
+        [Route("{bookId:length(24)}")]
         [HttpPatch]
-        public IActionResult Update([FromRoute] string id, [FromBody] LoanViewModel loanViewModel)
+        public IActionResult Update([FromRoute] string bookId, [FromBody] PatchLoanViewModel loanViewModel)
         {
-            if (id != loanViewModel.BookId)
+            if (bookId != loanViewModel.BookId)
             {
                 return BadRequest("Body and url parameters must match.");
             }
 
-            BookLoan bookLoan = _bookService.Get(id);
-            if (bookLoan == null) return NotFound();
-            bookLoan.Borrowed = loanViewModel.Borrowed;
-            if (loanViewModel.Returned.HasValue)
+            Book bookLoan = _bookService.Get(bookId);
+            if (bookLoan == null) return NotFound("Book not found");
+            Loan loan = bookLoan.GetLoan(loanViewModel.Id);
+            if (loan == null) return NotFound();
+            loan.User = loanViewModel.User;
+            loan.Returned = loanViewModel.Returned;
+            if (!IsLoanDateValid(loan))
             {
-                if (bookLoan.Borrowed < loanViewModel.Returned.Value)
-                {
-                    return BadRequest("Returned date must be greather than borrowed date.");
-                }
-                bookLoan.Returned = loanViewModel.Returned.Value;
+                return BadRequest("Returned date must be greather than borrowed date.");
             }
-            bookLoan.User = loanViewModel.User;
-            _bookService.Update(id, bookLoan);
+            bookLoan.UpdateLoan(loan);
+            _bookService.Update(bookId, bookLoan);
             return NoContent();
         }
 
-        private static BookLoanViewModel ToViewModel(BookLoan bookLoan)
+        /// <summary>
+        /// Inserir um empréstimo.
+        /// </summary>
+        [Route("{bookId:length(24)}")]
+        [HttpPost]
+        public IActionResult Create([FromRoute] string bookId, [FromBody] CreateLoanViewModel loanViewModel)
         {
-            return new BookLoanViewModel
+            Book book = _bookService.Get(bookId);
+            if (book == null) return NotFound("Book not found");
+            if (!book.IsAvaiable()) return BadRequest("Book unavailable");
+            Loan loan = book.AddLoan(loanViewModel.User);
+            if (!IsLoanDateValid(loan))
             {
-                BookId = bookLoan.Id,
-                BookTitle = bookLoan.Title,
-                BookAuthor = bookLoan.Author,
-                User = bookLoan.User,
-                Borrowed = bookLoan.Borrowed,
-                Returned = bookLoan.Returned
-            };
+                return BadRequest("Returned date must be greather than borrowed date.");
+            }
+            _bookService.Update(bookId, book);
+            return Ok(loan);
         }
 
-        private static List<BookLoanViewModel> ToViewModel(List<BookLoan> bookLoan)
+        private static bool IsLoanDateValid(Loan loan)
         {
-            var result = new List<BookLoanViewModel>();
-            bookLoan.ForEach(model => { result.Add(ToViewModel(model)); });
-            return result;
-        }
-
-        private static BookLoanFilter LoanedOnly(string id = null)
-        {
-            return new BookLoanFilter
+            if (loan.Returned > DateTime.MinValue)
             {
-                Id = id,
-                BeenLoaned = true
-            };
+                return loan.Borrowed < loan.Returned;
+            }
+            return true;
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Library.Models;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace Library.ViewModels
@@ -13,12 +14,13 @@ namespace Library.ViewModels
         [MaxLength(200)]
         public string Author { get; set; }
 
-        public BookLoan ToModel()
+        public Book ToModel()
         {
-            return new BookLoan
+            return new Book
             {
                 Author = Author,
-                Title = Title
+                Title = Title,
+                Loans = new List<Loan>()
             };
         }
     }

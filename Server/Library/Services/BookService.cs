@@ -8,7 +8,7 @@ namespace Library.Services
 {
     public class BookService
     {
-        private readonly IMongoCollection<BookLoan> _books;
+        private readonly IMongoCollection<Book> _books;
 
         public BookService(IDatabaseSettings settings)
         {
@@ -16,25 +16,25 @@ namespace Library.Services
             var client = new MongoClient(settings.ConnectionString);
             var database = client.GetDatabase(settings.DatabaseName);
 
-            _books = database.GetCollection<BookLoan>(settings.BooksCollectionName);
+            _books = database.GetCollection<Book>(settings.BooksCollectionName);
         }
 
-        public List<BookLoan> Get() =>
+        public List<Book> Get() =>
             _books.Find(book => true).ToList();
 
-        public BookLoan Get(string id) =>
+        public Book Get(string id) =>
             _books.Find(book => book.Id == id).FirstOrDefault();
 
-        public List<BookLoan> Get(BookLoanFilter filter)
+        public List<Book> Get(BookLoanFilter filter)
         {
             if (filter == null) throw new ArgumentNullException(nameof(filter));
 
-            // bad feelings StringComparison unsupported
-            var builder = Builders<BookLoan>.Filter;
+            var builder = Builders<Book>.Filter;
             var builderFilter = builder.Empty;
 
             if (filter.Id != null && filter.Id.Length > 0)
             {
+                // bad feelings StringComparison unsupported
                 builderFilter &= builder.Where(book => book.Id.Contains(filter.Id));
             }
 
@@ -50,23 +50,22 @@ namespace Library.Services
 
             if (filter.BeenLoaned)
             {
-                // book.Loaned not supported
-                builderFilter &= builder.Where(book => book.Borrowed > DateTime.MinValue || book.Returned > DateTime.MinValue);
+                builderFilter &= builder.Where(book => book.Loans.Count > 0);
             }
 
             return _books.Find(builderFilter).ToList();
         }
 
-        public BookLoan Create(BookLoan book)
+        public Book Create(Book book)
         {
             _books.InsertOne(book);
             return book;
         }
 
-        public void Update(string id, BookLoan bookIn) =>
+        public void Update(string id, Book bookIn) =>
             _books.ReplaceOne(book => book.Id == id, bookIn);
 
-        public void Remove(BookLoan bookIn) =>
+        public void Remove(Book bookIn) =>
             _books.DeleteOne(book => book.Id == bookIn.Id);
 
         public void Remove(string id) =>
