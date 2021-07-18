@@ -1,0 +1,46 @@
+<div class="container">
+  <div class="row">
+    <div class="col-md-3">
+      <mat-list>
+        <mat-list-item *ngFor="let book of books">
+          <div mat-line>Title: {{ book.title }}</div>
+          <div mat-line> Author: {{ book.author  }} </div>
+        </mat-list-item>
+      </mat-list>
+    </div>
+    <div class="col-md-3">
+
+      <mat-card>
+        <mat-card-content>
+          <mat-card-header>
+          </mat-card-header>
+          <form [formGroup]="bookForm" (ngSubmit)="createBook()">
+            <p>
+              <mat-form-field>
+                <mat-label>Title</mat-label>
+                <input type="text" matInput formControlName="title"
+                  [errorStateMatcher]="stateMatcher">
+                <mat-error *ngIf="bookForm.controls.title.hasError('required')">
+                  Obrigatório
+                </mat-error>
+              </mat-form-field>
+            </p>
+            <p>
+              <mat-form-field>
+                <mat-label>Senha</mat-label>
+                <input matInput type="text" formControlName="author" [errorStateMatcher]="stateMatcher">
+                <mat-error *ngIf="bookForm.controls.author.hasError('required')">
+                  Obrigatório
+                </mat-error>
+              </mat-form-field>
+            </p>
+            <p>
+              <button type="submit" mat-stroked-button color="primary">Adicionar</button>
+            </p>
+          </form>
+        </mat-card-content>
+      </mat-card>
+
+    </div>
+  </div>
+</div>
